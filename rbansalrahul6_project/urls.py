@@ -16,6 +16,34 @@ Including another URLconf
 from django.conf.urls import url
 from django.contrib import admin
 
+from django.contrib.auth.models import User, Group
+from django.views import generic
+from django import forms
+
+from dal import autocomplete
+
+
+class GroupAutocomplete(autocomplete.Select2QuerySetView):
+    def get_queryset(self):
+        return Group.objects.all()
+
+
+class UserForm(forms.ModelForm):
+    class Meta:
+        model = User
+        widgets = dict(
+            groups=autocomplete.ModelSelect2Multiple('group_autocomplete'),
+        )
+        exclude = []
+
+
+class UserUpdate(generic.UpdateView):
+    model = User
+    form_class = UserForm
+
+
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
+    url(r'user/(?P<pk>\d+)/$', UserUpdate.as_view()),
+    url(r'group/$', GroupAutocomplete.as_view(), name='group_autocomplete'),
 ]
